@@ -16,7 +16,7 @@ Trusted-agent OAuth broker — proof of concept for Google Docs.
 - Refresh tokens are requested (`access_type=offline`) but only stashed in session storage. The buy-tier path (durable refresh-token custody on the backend) is a TODO marker in `background.js`.
 - Auto-click only handles the consent screen and unverified-app warning. MFA, login, and any other Google security challenge deliberately bypass auto-click and require the user.
 - English-only button text matching. i18n is a TODO.
-- The localhost redirect URI doesn't actually serve anything — the extension's `tabs.onUpdated` listener catches the navigation and closes the tab before it fails to load. There's a brief flash. A real domain you control would be cleaner.
+- The localhost redirect URI doesn't actually serve anything. The extension's `tabs.onUpdated` listener catches the navigation and extracts the code, but the tab is left open on a connection-refused page so dev users can see the full callback URL in the URL bar. For non-dev users we'd swap this for a bundled success page or a real hosted callback.
 
 ## Setup
 
@@ -92,7 +92,7 @@ Symptom → where to look:
 - **Token exchange fails with `redirect_uri_mismatch`.** The redirect URI in `src/config.js` must exactly match one of the URIs registered on your GCP OAuth client. Default is `http://localhost:8765/vgate-callback`.
 - **Token exchange fails with `invalid_grant`.** Most often: clock skew, or the code has already been used (each authorization code is single-use). Try Connect again.
 - **Drive API returns 403.** Either the Drive API isn't enabled in your GCP project, or your account isn't on the Test Users list for the consent screen.
-- **Brief "connection refused" flash on the redirect tab.** Expected — nothing actually serves `http://localhost:8765`, and the SW closes the tab before the page renders. Harmless. A real domain you control would eliminate it.
+- **"This site can't be reached" / connection-refused on the redirect tab.** Expected — nothing actually serves `http://localhost:8765`. The SW has already pulled the code out of the URL before the page tries to load; the tab is intentionally left open so you can see the full callback URL. Close it manually or just leave it.
 
 ## Known fragile bits
 

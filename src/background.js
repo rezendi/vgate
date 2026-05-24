@@ -98,9 +98,11 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   const expectedState = pending.state;
   pending = null;
 
-  // Close the tab regardless of outcome — nothing's actually listening on localhost:8765,
-  // so leaving it open would just show a connection-refused page.
-  try { await chrome.tabs.remove(tabId); } catch {}
+  // Intentionally NOT closing the tab. The user lands on a connection-refused page
+  // at localhost:8765, which is fine for dev iteration — the URL bar still shows
+  // the full callback URL (code + state), making it easy to see what happened.
+  // For non-dev users we'd swap this for a bundled success page or a real hosted
+  // callback. TODO: revisit when we have non-dev users.
 
   try {
     const u = new URL(url);
