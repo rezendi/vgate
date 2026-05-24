@@ -24,6 +24,12 @@ export const CLIENT_ID = '';
 export const CLIENT_SECRET = '';
 export const REDIRECT_URI = 'http://localhost:8765/vgate-callback';
 
+// Optional: pre-select a Google account and skip the account chooser screen.
+// Set to your Google email address (e.g. 'you@gmail.com') for a true one-click
+// flow when you only ever auth with one account. Leave blank to show the
+// chooser every time, which is the safer default if you have multiple accounts.
+export const LOGIN_HINT = '';
+
 export const SCOPES = [
   'openid',
   'email',

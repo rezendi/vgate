@@ -11,7 +11,7 @@
 //
 // Buy-mode (durable refresh-token storage, backend custody) is a TODO — marked below.
 
-import { CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, SCOPES } from './config.js';
+import { CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, SCOPES, LOGIN_HINT } from './config.js';
 import { generateCodeVerifier, deriveCodeChallenge } from './pkce.js';
 
 const AUTH_URL  = 'https://accounts.google.com/o/oauth2/v2/auth';
@@ -64,6 +64,8 @@ async function connect() {
     access_type: 'offline',  // request refresh_token (buy-tier hook lives here)
     prompt: 'consent'         // force consent screen each time, for demo
   });
+  // Optional: pre-select an account to skip the chooser.
+  if (LOGIN_HINT) params.set('login_hint', LOGIN_HINT);
 
   const authUrl = `${AUTH_URL}?${params.toString()}`;
   const tab = await chrome.tabs.create({ url: authUrl, active: true });

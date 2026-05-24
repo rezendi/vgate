@@ -47,6 +47,8 @@ cp src/config.example.js src/config.js
 # edit src/config.js, paste in your client_id and client_secret
 ```
 
+**Optional:** set `LOGIN_HINT` in `config.js` to your Google email address (e.g. `'you@gmail.com'`). When set, Google's auth flow pre-selects that account and skips the chooser screen, making Connect truly one-click. Leave blank if you ever want to choose between multiple accounts at connect time — Google will keep showing the chooser.
+
 ### 5. Load the extension
 
 **Chrome / Edge:**
