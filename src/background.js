@@ -120,6 +120,10 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     await chrome.storage.session.set({ tokens, connectedAt: Date.now() });
     console.log('[vgate] connected; access_token issued, expires in', tokens.expires_in, 's');
 
+    // POC demonstration: immediately exercise the granted scopes by pulling
+    // the user's recent Docs. Dumps to the SW console.
+    try { await listDocs(); } catch (e) { console.error('[vgate] auto-list-docs failed:', e); }
+
     // TODO (buy-tier): forward refresh_token to backend here.
     // For try-mode POC we keep everything in session storage — dies with the SW.
   } catch (err) {
@@ -154,6 +158,8 @@ async function onConsentEvent(msg) {
 }
 
 // Demo: list the user's 10 most recently modified Google Docs.
+// Always logs the result to the SW console so it's visible to dev users
+// regardless of whether the popup or the auto-after-connect path called us.
 async function listDocs() {
   const { tokens } = await chrome.storage.session.get('tokens');
   if (!tokens?.access_token) throw new Error('not connected');
@@ -172,5 +178,10 @@ async function listDocs() {
     throw new Error(`Drive API failed: ${res.status} ${await res.text()}`);
   }
   const data = await res.json();
-  return data.files || [];
+  const files = data.files || [];
+
+  console.log(`[vgate] ${files.length} recent Google Docs:`);
+  console.table(files.map(f => ({ name: f.name, id: f.id, modified: f.modifiedTime })));
+
+  return files;
 }
