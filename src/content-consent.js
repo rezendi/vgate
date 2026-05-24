@@ -67,6 +67,29 @@
     return findClickableByText(['Allow', 'Continue', 'Allow access']);
   }
 
+  // Modern Google consent: sensitive scopes appear as opt-in checkboxes
+  // ("Choose what VGate can access"), unchecked by default. If we click
+  // Continue without checking them, Google grants only the always-on basics
+  // (openid/email/profile) and silently drops the sensitive scopes — the
+  // token comes back with a narrower grant than requested.
+  //
+  // Strategy: find all unchecked scope checkboxes and click them. Returns
+  // the count so the caller knows whether to defer clicking Continue.
+  function checkAllScopeBoxes() {
+    const selectors = [
+      '[role="checkbox"][aria-checked="false"]',
+      'input[type="checkbox"]:not(:checked)'
+    ];
+    const boxes = document.querySelectorAll(selectors.join(', '));
+    let clicked = 0;
+    for (const box of boxes) {
+      if (!isVisible(box)) continue;
+      box.click();
+      clicked++;
+    }
+    return clicked;
+  }
+
   let warningClicked   = false;
   let advancedClicked  = false; // legacy two-step flow only
   let consentClicked   = false;
@@ -120,6 +143,14 @@
     }
 
     if (kind === 'consent' && !consentClicked) {
+      // First: opt into any unchecked scope boxes. Without this, Continue
+      // submits with sensitive scopes deselected — Google grants only basics.
+      const checked = checkAllScopeBoxes();
+      if (checked > 0) {
+        LOG(`checked ${checked} scope checkbox(es); deferring Continue to next tick`);
+        send('checked-scope-boxes', { count: checked });
+        return; // let DOM settle; next mutation tick will click Continue
+      }
       const btn = findAllowButton();
       if (btn) {
         btn.click();
