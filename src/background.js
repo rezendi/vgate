@@ -119,6 +119,15 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     const tokens = await exchangeCodeForTokens(code, verifier);
     await chrome.storage.session.set({ tokens, connectedAt: Date.now() });
     console.log('[vgate] connected; access_token issued, expires in', tokens.expires_in, 's');
+    console.log('[vgate] granted scopes:', tokens.scope);
+    // Sanity check: did we actually get what we asked for?
+    const granted = new Set((tokens.scope || '').split(' '));
+    const missing = SCOPES.filter(s => !granted.has(s));
+    if (missing.length) {
+      console.warn('[vgate] requested but NOT granted:', missing,
+        '\n  Likely cause: these scopes are not added to the OAuth consent screen in GCP.',
+        '\n  Fix: https://console.cloud.google.com/apis/credentials/consent → Edit App → Scopes → Add/Remove → search & check, then revoke the existing grant at https://myaccount.google.com/permissions and reconnect.');
+    }
 
     // POC demonstration: immediately exercise the granted scopes by pulling
     // the user's recent Docs. Dumps to the SW console.

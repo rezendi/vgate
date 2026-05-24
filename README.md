@@ -93,7 +93,10 @@ Symptom → where to look:
 - **"connect failed: CLIENT_ID not set".** You haven't copied `src/config.example.js` to `src/config.js` and filled in your credentials.
 - **Token exchange fails with `redirect_uri_mismatch`.** The redirect URI in `src/config.js` must exactly match one of the URIs registered on your GCP OAuth client. Default is `http://localhost:8765/vgate-callback`.
 - **Token exchange fails with `invalid_grant`.** Most often: clock skew, or the code has already been used (each authorization code is single-use). Try Connect again.
-- **Drive API returns 403.** Either the Drive API isn't enabled in your GCP project, or your account isn't on the Test Users list for the consent screen.
+- **Drive API returns 403.** Three common causes:
+  - **`ACCESS_TOKEN_SCOPE_INSUFFICIENT` / "insufficient authentication scopes"**: the scope was requested in the auth URL but not actually granted. Almost always means the scope isn't added to the OAuth consent screen in GCP. Fix: Edit App → Scopes → Add/Remove → add `drive.readonly` and `documents.readonly`, save. Then **revoke the existing grant** at https://myaccount.google.com/permissions and reconnect (Google caches scope sets — `prompt=consent` helps but revoking is the bulletproof reset). The SW console logs the actually-granted scopes on every connect so you can see what came back.
+  - The Drive API isn't enabled in your GCP project (different error wording — usually mentions "Drive API has not been used in project").
+  - Your account isn't on the Test Users list for the consent screen.
 - **"This site can't be reached" / connection-refused on the redirect tab.** Expected — nothing actually serves `http://localhost:8765`. The SW has already pulled the code out of the URL before the page tries to load; the tab is intentionally left open so you can see the full callback URL. Close it manually or just leave it.
 
 ## Known fragile bits
