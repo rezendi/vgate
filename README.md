@@ -4,7 +4,7 @@ Trusted-agent OAuth broker — proof of concept for Google Docs.
 
 ## What this demonstrates
 
-- MV3 Chrome extension that auto-completes a Google OAuth consent flow on behalf of the user.
+- MV3 browser extension (Chrome / Edge / Firefox 121+) that auto-completes a Google OAuth consent flow on behalf of the user.
 - Content script clicks "Allow" on the consent screen (and clicks through the unverified-app warning while we're in POC test-mode).
 - Service worker handles redirect interception, PKCE-protected code exchange, and token storage.
 - Tokens land in `chrome.storage.session` — "try-mode": in-memory only, dies with the service worker.
@@ -49,10 +49,21 @@ cp src/config.example.js src/config.js
 
 ### 5. Load the extension
 
-- Open `chrome://extensions`
+**Chrome / Edge:**
+
+- Open `chrome://extensions` (or `edge://extensions`)
 - Enable Developer mode (top right)
 - Click "Load unpacked" → select this directory
-- The extension ID Chrome assigns is fine to ignore; we use a localhost redirect
+- The extension ID the browser assigns is fine to ignore; we use a localhost redirect
+- Note: extensions are scoped per-profile. If you use multiple Chrome profiles, load vgate in the profile where you're actually signed in to Google — extensions can't see across profiles, and the OAuth tab will open in whichever profile vgate is installed in.
+
+**Firefox (121+):**
+
+- Open `about:debugging` → "This Firefox" (left sidebar)
+- Click "Load Temporary Add-on…" → select `manifest.json` in this directory
+- **Caveat: this is temporary.** The extension disappears when you restart Firefox. For permanent install you need a signed `.xpi` (submit to [AMO](https://addons.mozilla.org/developers/) — free, signing usually takes hours), or use Firefox Developer Edition / Nightly with `xpinstall.signatures.required` set to `false` in `about:config`.
+- After install, you may need to grant host permissions for `accounts.google.com` via the extension icon — Firefox can treat declared host permissions as optional and require an explicit user opt-in.
+- Older Firefox (<121): MV3 service workers + ES modules aren't supported. You'd need to refactor to event pages (`"background": { "scripts": [...] }`) and inline `pkce.js` and `config.js` into `background.js`. Not currently supported by this POC.
 
 ## Use
 
@@ -65,9 +76,11 @@ cp src/config.example.js src/config.js
 
 ## Debugging
 
-- **Service worker logs**: `chrome://extensions` → vgate → "Inspect views: service worker"
-- **Content script logs**: open devtools on the accounts.google.com tab while it's open. Look for `[vgate-content]` lines.
-- **Popup logs**: right-click the popup → Inspect.
+- **Service worker logs:**
+  - Chrome/Edge: `chrome://extensions` → vgate → "Inspect views: service worker"
+  - Firefox: `about:debugging` → "This Firefox" → vgate → "Inspect"
+- **Content script logs**: open devtools on the accounts.google.com tab while it's open. Look for `[vgate-content]` lines. (Same in both browsers.)
+- **Popup logs**: right-click the popup → Inspect. (Same in both browsers.)
 
 ## Troubleshooting
 
