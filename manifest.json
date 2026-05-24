@@ -27,5 +27,11 @@
   "action": {
     "default_popup": "src/popup.html",
     "default_title": "vgate"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "vgate@rezendi.com",
+      "strict_min_version": "121.0"
+    }
   }
 }
